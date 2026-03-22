@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Português">
+<meta name="theme-color" content="#1a3a5c">
+<title>Português do Dia</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --azul: #1a3a5c;
+    --areia: #f5efe6;
+    --ouro: #c8922a;
+    --verde: #2d5a4f;
+    --cinza: #8a8070;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background-color: var(--areia);
+    color: var(--azul);
+    font-family: 'Crimson Pro', Georgia, serif;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background-image:
+      radial-gradient(ellipse at 10% 20%, rgba(200,146,42,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 90% 80%, rgba(26,58,92,0.07) 0%, transparent 50%);
+    padding-top: var(--safe-top);
+    padding-bottom: var(--safe-bottom);
+  }
+
+  header {
+    padding: 2rem 2rem 1rem;
+    text-align: center;
+    border-bottom: 1px solid rgba(26,58,92,0.12);
+  }
+
+  .header-flag { font-size: 1.5rem; margin-bottom: 0.3rem; opacity: 0.7; }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.6rem, 6vw, 2.2rem);
+    font-weight: 700;
+    color: var(--azul);
+    letter-spacing: 0.02em;
+  }
+  h1 span { color: var(--ouro); font-style: italic; }
+
+  .subtitle {
+    font-size: 0.85rem;
+    color: var(--cinza);
+    margin-top: 0.3rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 300;
+  }
+
+  #date-display {
+    font-size: 0.78rem;
+    color: var(--cinza);
+    margin-top: 0.4rem;
+    font-style: italic;
+  }
+
+  .container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 1.2rem 1rem 4rem;
+  }
+
+  /* Install banner */
+  #install-banner {
+    display: none;
+    background: linear-gradient(135deg, var(--azul), #2a5080);
+    color: white;
+    border-radius: 12px;
+    padding: 1rem 1.2rem;
+    margin-bottom: 1.2rem;
+    cursor: pointer;
+    align-items: center;
+    gap: 0.8rem;
+    box-shadow: 0 4px 16px rgba(26,58,92,0.25);
+  }
+  #install-banner.visible { display: flex; }
+  #install-banner .install-icon { font-size: 1.6rem; flex-shrink: 0; }
+  #install-banner .install-text strong { display: block; font-size: 0.95rem; margin-bottom: 0.1rem; }
+  #install-banner .install-text span { font-size: 0.78rem; opacity: 0.85; }
+  #install-banner .install-arrow { margin-left: auto; font-size: 1.2rem; opacity: 0.7; }
+
+  /* Notification bar */
+  .notification-bar {
+    background: var(--verde);
+    color: white;
+    padding: 0.7rem 1.2rem;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    font-size: 0.82rem;
+    margin-bottom: 1.2rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .notification-bar:active { background: #1f3f37; }
+  .notification-bar strong { font-weight: 600; }
+
+  /* Cards */
+  #cards-container { display: flex; flex-direction: column; gap: 1rem; }
+
+  .sentence-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.4rem 1.5rem;
+    box-shadow: 0 2px 20px rgba(26,58,92,0.09), 0 1px 4px rgba(26,58,92,0.05);
+    border: 1px solid rgba(26,58,92,0.07);
+    opacity: 0;
+    transform: translateY(16px);
+    animation: cardIn 0.45s ease forwards;
+    position: relative;
+    overflow: hidden;
+  }
+  .sentence-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    background: var(--ouro);
+    border-radius: 16px 0 0 16px;
+  }
+  .sentence-card:nth-child(2) { animation-delay: 0.15s; }
+  .sentence-card:nth-child(2)::before { background: var(--verde); }
+
+  @keyframes cardIn { to { opacity: 1; transform: translateY(0); } }
+
+  .card-number {
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--cinza);
+    margin-bottom: 0.7rem;
+  }
+
+  .portuguese-text {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.15rem, 5vw, 1.5rem);
+    font-style: italic;
+    color: var(--azul);
+    line-height: 1.4;
+    margin-bottom: 0.45rem;
+  }
+
+  .pronunciation {
+    font-size: 0.85rem;
+    color: var(--ouro);
+    margin-bottom: 0.65rem;
+    font-weight: 300;
+  }
+  .pronunciation::before { content: '🔤 '; }
+
+  .german-text {
+    font-size: 0.93rem;
+    color: #555;
+    font-weight: 300;
+    line-height: 1.5;
+    padding-top: 0.65rem;
+    border-top: 1px solid rgba(26,58,92,0.08);
+  }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 0.9rem;
+  }
+
+  .context-tag {
+    font-size: 0.7rem;
+    background: var(--areia);
+    color: var(--cinza);
+    padding: 0.2rem 0.65rem;
+    border-radius: 20px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .audio-btn {
+    background: var(--azul);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 42px;
+    height: 42px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, transform 0.1s;
+    flex-shrink: 0;
+    touch-action: manipulation;
+  }
+  .audio-btn:active { background: var(--ouro); transform: scale(0.93); }
+  .audio-btn.playing { background: var(--verde); animation: pulse 0.9s infinite; }
+
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(45,90,79,0.45); }
+    50% { box-shadow: 0 0 0 8px rgba(45,90,79,0); }
+  }
+
+  /* Loading */
+  #loading { text-align: center; padding: 3rem 1rem; }
+  .wave { display: inline-flex; gap: 6px; margin-bottom: 1rem; }
+  .wave span {
+    display: block; width: 9px; height: 9px;
+    background: var(--ouro); border-radius: 50%;
+    animation: waveBounce 1.2s ease-in-out infinite;
+  }
+  .wave span:nth-child(2) { animation-delay: 0.15s; background: var(--azul); }
+  .wave span:nth-child(3) { animation-delay: 0.3s; background: var(--verde); }
+  @keyframes waveBounce {
+    0%,80%,100% { transform: scale(0.6); opacity: 0.5; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+  .loading-text { color: var(--cinza); font-style: italic; }
+
+  /* Actions */
+  #actions { margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.8rem; }
+
+  .btn-primary {
+    width: 100%; padding: 1rem;
+    background: var(--azul); color: white;
+    border: none; border-radius: 12px;
+    font-family: 'Crimson Pro', serif; font-size: 1rem;
+    letter-spacing: 0.04em; cursor: pointer;
+    transition: background 0.2s; touch-action: manipulation;
+  }
+  .btn-primary:active { background: #122a46; }
+  .btn-primary:disabled { background: #aaa; }
+
+  .btn-secondary {
+    width: 100%; padding: 0.8rem;
+    background: transparent; color: var(--cinza);
+    border: 1px solid rgba(26,58,92,0.2); border-radius: 12px;
+    font-family: 'Crimson Pro', serif; font-size: 0.9rem;
+    cursor: pointer; touch-action: manipulation;
+  }
+  .btn-secondary:active { border-color: var(--ouro); color: var(--ouro); }
+
+  /* Streak */
+  .streak-bar {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0.5rem; margin-top: 1.5rem;
+    font-size: 0.82rem; color: var(--cinza);
+  }
+
+  /* Error */
+  #error-msg {
+    display: none;
+    background: #fff0f0; border: 1px solid #f5c0c0;
+    border-radius: 10px; padding: 1rem 1.2rem;
+    color: #a03030; font-size: 0.88rem;
+    text-align: center; margin-top: 1rem;
+  }
+
+  .next-badge {
+    text-align: center; margin-top: 0.5rem;
+    font-size: 0.78rem; color: var(--cinza); font-style: italic;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5); z-index: 200;
+    align-items: flex-end; justify-content: center;
+    padding-bottom: var(--safe-bottom);
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: white;
+    border-radius: 20px 20px 0 0;
+    padding: 2rem 1.5rem calc(1.5rem + var(--safe-bottom));
+    width: 100%; max-width: 500px;
+    text-align: center;
+    box-shadow: 0 -4px 30px rgba(0,0,0,0.15);
+    animation: slideUp 0.3s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+  .modal h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem; color: var(--azul); margin-bottom: 0.6rem;
+  }
+  .modal p { font-size: 0.9rem; color: #666; line-height: 1.6; margin-bottom: 1.2rem; }
+
+  .notif-time-row {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0.6rem; margin-bottom: 1.2rem;
+  }
+  .notif-time-row label { font-size: 0.9rem; color: var(--cinza); }
+  .notif-time-row input[type="time"] {
+    border: 1px solid rgba(26,58,92,0.25); border-radius: 8px;
+    padding: 0.5rem 0.8rem;
+    font-family: 'Crimson Pro', serif; font-size: 1.1rem;
+    color: var(--azul); background: var(--areia);
+  }
+
+  .modal-btns { display: flex; flex-direction: column; gap: 0.7rem; }
+  .modal-btn-yes {
+    background: var(--verde); color: white; border: none;
+    border-radius: 10px; padding: 0.9rem;
+    font-family: 'Crimson Pro', serif; font-size: 1rem;
+    cursor: pointer; touch-action: manipulation;
+  }
+  .modal-btn-no {
+    background: transparent; color: var(--cinza); border: none;
+    font-family: 'Crimson Pro', serif; font-size: 0.88rem;
+    cursor: pointer; text-decoration: underline; padding: 0.3rem;
+  }
+
+  .notif-status {
+    font-size: 0.82rem; padding: 0.4rem 0.9rem;
+    border-radius: 20px; margin-top: 0.8rem; display: inline-block;
+  }
+  .notif-status.granted { background: #e8f5e9; color: #2d5a4f; }
+  .notif-status.denied { background: #fdecea; color: #a03030; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-flag">🇵🇹</div>
+  <h1>Português <span>do Dia</span></h1>
+  <div class="subtitle">Deine tägliche Lektion</div>
+  <div id="date-display"></div>
+</header>
+
+<div class="container">
+
+  <!-- PWA Install Banner -->
+  <div id="install-banner">
+    <div class="install-icon">📲</div>
+    <div class="install-text">
+      <strong>App installieren</strong>
+      <span>Zum Startbildschirm hinzufügen</span>
+    </div>
+    <div class="install-arrow">›</div>
+  </div>
+
+  <!-- Notification bar -->
+  <div class="notification-bar" id="notif-bar" onclick="openNotifModal()">
+    <span>🔔</span>
+    <div>
+      <strong>Morgendliche Erinnerung einrichten</strong><br>
+      Täglich neue Sätze zur gewünschten Zeit
+    </div>
+    <span style="margin-left:auto;">›</span>
+  </div>
+
+  <div id="loading">
+    <div class="wave"><span></span><span></span><span></span></div>
+    <p class="loading-text">A IA está a gerar…</p>
+  </div>
+
+  <div id="cards-container" style="display:none;"></div>
+  <div id="error-msg">Die KI konnte keine Sätze generieren. Bitte erneut versuchen.</div>
+
+  <div id="actions" style="display:none;">
+    <button class="btn-primary" id="new-btn" onclick="loadSentences(true)">🔄 Neue Sätze generieren</button>
+    <button class="btn-secondary" onclick="speakAll()">🔊 Alle Sätze vorlesen</button>
+    <div class="next-badge" id="next-badge"></div>
+  </div>
+
+  <div class="streak-bar" id="streak-bar" style="display:none;">
+    <span>🔥</span><span id="streak-text"></span>
+  </div>
+
+</div>
+
+<!-- Notification Modal -->
+<div class="modal-overlay" id="modal-overlay" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <h2>🔔 Tägliche Erinnerung</h2>
+    <p>Wähle eine Uhrzeit — du bekommst jeden Morgen eine Benachrichtigung.</p>
+    <div class="notif-time-row">
+      <label>Uhrzeit:</label>
+      <input type="time" id="notif-time-input" value="08:00">
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn-yes" onclick="setupNotification()">Erinnerung aktivieren ✓</button>
+      <button class="modal-btn-no" onclick="closeNotifModal()">Später</button>
+    </div>
+    <div id="notif-status" class="notif-status" style="display:none;"></div>
+  </div>
+</div>
+
+<script>
+// ===== SERVICE WORKER =====
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(e => console.log('SW:', e));
+}
+
+// ===== PWA INSTALL =====
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('install-banner').classList.add('visible');
+});
+
+document.getElementById('install-banner').addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  if (outcome === 'accepted') {
+    document.getElementById('install-banner').classList.remove('visible');
+  }
+  deferredPrompt = null;
+});
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('install-banner').classList.remove('visible');
+});
+
+// ===== STATE =====
+const STORAGE_KEY = 'pt_daily_v2';
+function getState() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch { return {}; }
+}
+function setState(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({...getState(), ...data}));
+}
+
+// ===== DATE =====
+document.getElementById('date-display').textContent =
+  new Date().toLocaleDateString('de-DE', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+// ===== STREAK =====
+function updateStreak() {
+  const st = getState();
+  const todayStr = new Date().toISOString().split('T')[0];
+  if (st.lastVisit === todayStr) { showStreak(st.streak || 1); return; }
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+  const newStreak = st.lastVisit === yesterday ? (st.streak || 0) + 1 : 1;
+  setState({ streak: newStreak, lastVisit: todayStr });
+  showStreak(newStreak);
+}
+function showStreak(n) {
+  document.getElementById('streak-bar').style.display = 'flex';
+  document.getElementById('streak-text').textContent =
+    n === 1 ? 'Erster Tag! Bleib dran 💪' : `${n} Tage in Folge – weiter so!`;
+}
+
+// ===== CATEGORIES =====
+const CATEGORIES = [
+  'Alltag & Einkaufen', 'Café & Restaurant', 'Wetter & Natur',
+  'Höflichkeit & Begrüßung', 'Reisen & Orientierung', 'Emotionen ausdrücken',
+  'Fragen stellen', 'Zeit & Uhrzeit', 'Familie & Freunde', 'Strand & Meer',
+  'Gesundheit & Apotheke', 'Post & Bank', 'Haustiere & Natur'
+];
+function getTodayCategory() {
+  const d = Math.floor((Date.now() - new Date(new Date().getFullYear(),0,0)) / 86400000);
+  return CATEGORIES[d % CATEGORIES.length];
+}
+
+// ===== LOAD SENTENCES =====
+let currentSentences = [];
+
+async function loadSentences(forceNew = false) {
+  const st = getState();
+  const todayStr = new Date().toISOString().split('T')[0];
+  if (!forceNew && st.todayDate === todayStr && st.sentences) {
+    currentSentences = st.sentences;
+    renderCards(currentSentences);
+    updateStreak();
+    return;
+  }
+
+  showLoading(true);
+  document.getElementById('error-msg').style.display = 'none';
+  document.getElementById('new-btn').disabled = true;
+
+  const category = getTodayCategory();
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: `Du bist ein Portugiesisch-Lehrer für deutsche Muttersprachler. Erstelle genau 2 alltägliche portugiesische Sätze zum vorgegebenen Thema. Antworte NUR mit einem JSON-Array, keine Markdown-Backticks, kein Kommentar.
+
+Format:
+[
+  {
+    "pt": "Bom dia! Como está?",
+    "de": "Guten Morgen! Wie geht es Ihnen?",
+    "pron": "bom DJI-a, KO-mo esh-TAH",
+    "context": "Formelle Begrüßung",
+    "tip": "Wird morgens bis ca. 12 Uhr verwendet"
+  },
+  { ... }
+]`,
+        messages: [{ role: 'user', content: `Thema: "${category}". 2 einfache, häufig verwendete Sätze auf Europäisch-Portugiesisch (Portugal, nicht Brasilien).` }]
+      })
+    });
+    if (!res.ok) throw new Error('API ' + res.status);
+    const data = await res.json();
+    const raw = data.content.find(b => b.type === 'text')?.text || '[]';
+    const sentences = JSON.parse(raw.replace(/```json|```/g, '').trim());
+    if (!Array.isArray(sentences) || sentences.length < 2) throw new Error('bad data');
+    currentSentences = sentences;
+    setState({ todayDate: todayStr, sentences, category });
+    renderCards(sentences);
+    updateStreak();
+  } catch(e) {
+    console.error(e);
+    showLoading(false);
+    document.getElementById('error-msg').style.display = 'block';
+  }
+  document.getElementById('new-btn').disabled = false;
+}
+
+// ===== RENDER =====
+function renderCards(sentences) {
+  showLoading(false);
+  const category = getState().category || getTodayCategory();
+  const container = document.getElementById('cards-container');
+  container.innerHTML = '';
+  sentences.forEach((s, i) => {
+    const card = document.createElement('div');
+    card.className = 'sentence-card';
+    card.innerHTML = `
+      <div class="card-number">Satz ${i+1} · ${esc(category)}</div>
+      <div class="portuguese-text">${esc(s.pt)}</div>
+      <div class="pronunciation">${esc(s.pron)}</div>
+      <div class="german-text">${esc(s.de)}${s.tip ? `<br><em style="font-size:.8rem;color:var(--cinza)">💡 ${esc(s.tip)}</em>` : ''}</div>
+      <div class="card-footer">
+        <span class="context-tag">${esc(s.context||'Alltag')}</span>
+        <button class="audio-btn" onclick="speak(${i},this)">🔊</button>
+      </div>`;
+    container.appendChild(card);
+  });
+  container.style.display = 'flex';
+  document.getElementById('actions').style.display = 'flex';
+  showNextBadge();
+}
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
+
+function showLoading(show) {
+  document.getElementById('loading').style.display = show ? 'block' : 'none';
+  if (show) {
+    document.getElementById('cards-container').style.display = 'none';
+    document.getElementById('actions').style.display = 'none';
+  }
+}
+
+// ===== TTS =====
+function speak(index, btn) {
+  if (!currentSentences[index]) return;
+  const utter = new SpeechSynthesisUtterance(currentSentences[index].pt);
+  utter.lang = 'pt-PT'; utter.rate = 0.85;
+  const voices = speechSynthesis.getVoices();
+  const v = voices.find(v => v.lang === 'pt-PT') || voices.find(v => v.lang.startsWith('pt'));
+  if (v) utter.voice = v;
+  if (btn) {
+    btn.classList.add('playing'); btn.textContent = '⏸';
+    utter.onend = () => { btn.classList.remove('playing'); btn.textContent = '🔊'; };
+  }
+  speechSynthesis.cancel();
+  speechSynthesis.speak(utter);
+}
+
+function speakAll() {
+  if (!currentSentences.length) return;
+  speechSynthesis.cancel();
+  let i = 0;
+  function next() {
+    if (i >= currentSentences.length) return;
+    const utter = new SpeechSynthesisUtterance(currentSentences[i].pt);
+    utter.lang = 'pt-PT'; utter.rate = 0.82;
+    const v = speechSynthesis.getVoices().find(v => v.lang === 'pt-PT') || speechSynthesis.getVoices().find(v => v.lang.startsWith('pt'));
+    if (v) utter.voice = v;
+    utter.onend = () => { i++; setTimeout(next, 900); };
+    speechSynthesis.speak(utter);
+  }
+  next();
+}
+
+// ===== NOTIFICATIONS =====
+function showNextBadge() {
+  const st = getState();
+  document.getElementById('next-badge').textContent = st.notifTime
+    ? `⏰ Tägliche Erinnerung: ${st.notifTime} Uhr`
+    : '⏰ Noch keine Erinnerung eingerichtet';
+}
+
+function openNotifModal() { document.getElementById('modal-overlay').classList.add('open'); }
+function closeNotifModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+function handleOverlayClick(e) { if (e.target === e.currentTarget) closeNotifModal(); }
+
+async function setupNotification() {
+  const timeVal = document.getElementById('notif-time-input').value || '08:00';
+  const statusEl = document.getElementById('notif-status');
+  statusEl.style.display = 'inline-block';
+
+  if (!('Notification' in window)) {
+    statusEl.className = 'notif-status denied';
+    statusEl.textContent = '⚠️ Dein Browser unterstützt keine Benachrichtigungen.';
+    return;
+  }
+
+  let perm = Notification.permission;
+  if (perm === 'default') perm = await Notification.requestPermission();
+
+  if (perm === 'granted') {
+    setState({ notifTime: timeVal });
+    scheduleNotification(timeVal);
+    statusEl.className = 'notif-status granted';
+    statusEl.textContent = `✓ Erinnerung um ${timeVal} Uhr gespeichert!`;
+    setTimeout(() => {
+      closeNotifModal();
+      showNextBadge();
+      updateNotifBar(timeVal);
+    }, 1600);
+  } else {
+    statusEl.className = 'notif-status denied';
+    statusEl.textContent = '❌ Bitte Benachrichtigungen erlauben und erneut versuchen.';
+  }
+}
+
+function updateNotifBar(time) {
+  const bar = document.getElementById('notif-bar');
+  bar.style.background = '#1f5c47';
+  bar.querySelector('strong').textContent = `🔔 Erinnerung: ${time} Uhr aktiv`;
+}
+
+function scheduleNotification(timeStr) {
+  if (window._notifInterval) clearInterval(window._notifInterval);
+  const [h, m] = timeStr.split(':').map(Number);
+  function check() {
+    const now = new Date();
+    if (now.getHours() === h && now.getMinutes() === m) {
+      const todayStr = now.toISOString().split('T')[0];
+      const st = getState();
+      if (st.lastNotif !== todayStr) {
+        setState({ lastNotif: todayStr });
+        new Notification('🇵🇹 Português do Dia', {
+          body: 'Deine täglichen Sätze warten auf dich!',
+          icon: './icon-192.png',
+          tag: 'pt-daily'
+        });
+      }
+    }
+  }
+  window._notifInterval = setInterval(check, 30000);
+  check();
+}
+
+// ===== INIT =====
+const saved = getState();
+if (saved.notifTime && Notification.permission === 'granted') {
+  scheduleNotification(saved.notifTime);
+  updateNotifBar(saved.notifTime);
+}
+
+speechSynthesis.getVoices();
+speechSynthesis.addEventListener('voiceschanged', () => speechSynthesis.getVoices());
+loadSentences();
+</script>
+</body>
+</html>
