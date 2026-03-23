@@ -462,16 +462,163 @@ function showStreak(n) {
     n === 1 ? 'Erster Tag! Bleib dran 💪' : `${n} Tage in Folge – weiter so!`;
 }
 
-// ===== CATEGORIES =====
-const CATEGORIES = [
-  'Alltag & Einkaufen', 'Café & Restaurant', 'Wetter & Natur',
-  'Höflichkeit & Begrüßung', 'Reisen & Orientierung', 'Emotionen ausdrücken',
-  'Fragen stellen', 'Zeit & Uhrzeit', 'Familie & Freunde', 'Strand & Meer',
-  'Gesundheit & Apotheke', 'Post & Bank', 'Haustiere & Natur'
+// ===== SENTENCE DATABASE (60 Tage) =====
+const ALLE_SAETZE = [
+  // 0 - Begrüßung
+  { category: 'Höflichkeit & Begrüßung', sentences: [
+    { pt: 'Bom dia! Como está?', de: 'Guten Morgen! Wie geht es Ihnen?', pron: 'bom DJI-a, KO-mo esh-TAH', context: 'Formell', tip: 'Bis ca. 12 Uhr' },
+    { pt: 'Com licença, pode ajudar-me?', de: 'Entschuldigung, können Sie mir helfen?', pron: 'kong li-SEN-sa, POD a-shu-DAR-m', context: 'Höflich', tip: 'Sehr höfliche Formulierung' }
+  ]},
+  // 1 - Café
+  { category: 'Café & Restaurant', sentences: [
+    { pt: 'Uma bica, se faz favor.', de: 'Einen Espresso, bitte.', pron: 'OO-ma BEE-ka, s fash fa-VOR', context: 'Bestellung', tip: '"Bica" ist der typisch portugiesische Espresso' },
+    { pt: 'A conta, por favor.', de: 'Die Rechnung, bitte.', pron: 'a KON-ta, por fa-VOR', context: 'Restaurant', tip: 'Gilt in jedem Restaurant' }
+  ]},
+  // 2 - Wetter
+  { category: 'Wetter & Natur', sentences: [
+    { pt: 'Que tempo lindo hoje!', de: 'Was für ein schönes Wetter heute!', pron: 'k TEM-po LIN-do O-zhe', context: 'Smalltalk', tip: 'Perfekt für Portugal!' },
+    { pt: 'Vai chover hoje?', de: 'Wird es heute regnen?', pron: 'vai sho-VER O-zhe', context: 'Frage', tip: '"Chover" = regnen' }
+  ]},
+  // 3 - Einkaufen
+  { category: 'Alltag & Einkaufen', sentences: [
+    { pt: 'Quanto custa isto?', de: 'Was kostet das?', pron: 'KWAN-to KUSh-ta ISH-to', context: 'Einkauf', tip: 'Die wichtigste Frage!' },
+    { pt: 'Tem em tamanho maior?', de: 'Haben Sie das in einer größeren Größe?', pron: 'teng em ta-MA-nyo ma-YOR', context: 'Kleidung', tip: '"Menor" = kleiner' }
+  ]},
+  // 4 - Orientierung
+  { category: 'Reisen & Orientierung', sentences: [
+    { pt: 'Onde fica a paragem do autocarro?', de: 'Wo ist die Bushaltestelle?', pron: 'ON-d FEE-ka a pa-RA-zheng do ow-to-KA-rro', context: 'Transport', tip: 'In Brasilien sagt man "ônibus"' },
+    { pt: 'Estou perdido/a. Pode ajudar-me?', de: 'Ich habe mich verirrt. Können Sie mir helfen?', pron: 'esh-TOH per-DEE-do, POD a-shu-DAR-m', context: 'Notfall', tip: '-o für Mann, -a für Frau' }
+  ]},
+  // 5 - Emotionen
+  { category: 'Emotionen ausdrücken', sentences: [
+    { pt: 'Estou muito contente!', de: 'Ich bin sehr glücklich!', pron: 'esh-TOH MUI-to kon-TEN-t', context: 'Freude', tip: '"Feliz" geht auch' },
+    { pt: 'Sinto muito.', de: 'Es tut mir sehr leid.', pron: 'SIN-to MUI-to', context: 'Mitgefühl', tip: 'Auch für Entschuldigungen' }
+  ]},
+  // 6 - Fragen
+  { category: 'Fragen stellen', sentences: [
+    { pt: 'Pode repetir, por favor?', de: 'Können Sie das bitte wiederholen?', pron: 'POD rr-pe-TEER, por fa-VOR', context: 'Verständnis', tip: 'Unentbehrlich beim Lernen!' },
+    { pt: 'O que é isso?', de: 'Was ist das?', pron: 'o k EH EE-sso', context: 'Neugier', tip: 'Zeige dabei auf den Gegenstand' }
+  ]},
+  // 7 - Zeit
+  { category: 'Zeit & Uhrzeit', sentences: [
+    { pt: 'Que horas são?', de: 'Wie viel Uhr ist es?', pron: 'k O-rras SOWNG', context: 'Uhrzeit', tip: 'Klassische Frage' },
+    { pt: 'A que horas abre?', de: 'Um wie viel Uhr öffnet es?', pron: 'a k O-rras A-br', context: 'Öffnungszeiten', tip: '"Fecha" = schließt' }
+  ]},
+  // 8 - Familie
+  { category: 'Familie & Freunde', sentences: [
+    { pt: 'Tenho um cão chamado Max.', de: 'Ich habe einen Hund namens Max.', pron: 'TE-nyo ung KOWNG sha-MA-do Max', context: 'Vorstellen', tip: '"Cão" = Hund (Portugal)' },
+    { pt: 'Vivo sozinha mas adoro isso.', de: 'Ich lebe allein, aber ich liebe es.', pron: 'VEE-vo so-ZEE-nya mash a-DO-ro EE-sso', context: 'Über sich', tip: '"Sozinho/a" = alleine' }
+  ]},
+  // 9 - Strand
+  { category: 'Strand & Meer', sentences: [
+    { pt: 'A água está fria hoje.', de: 'Das Wasser ist heute kalt.', pron: 'a A-gwa esh-TAH FREE-a O-zhe', context: 'Strand', tip: '"Morna" = lauwarm' },
+    { pt: 'Que vista maravilhosa!', de: 'Was für eine wunderschöne Aussicht!', pron: 'k VISH-ta ma-ra-vi-LYO-za', context: 'Natur', tip: 'Für Lagoa de Santo André!' }
+  ]},
+  // 10 - Gesundheit
+  { category: 'Gesundheit & Apotheke', sentences: [
+    { pt: 'Preciso de um medicamento para a dor.', de: 'Ich brauche ein Schmerzmittel.', pron: 'pre-SEE-zo d ung me-di-ka-MEN-to PA-ra a DOR', context: 'Apotheke', tip: '"Farmácia" = Apotheke' },
+    { pt: 'Não me sinto bem hoje.', de: 'Ich fühle mich heute nicht gut.', pron: 'nowng m SIN-to beng O-zhe', context: 'Befinden', tip: 'Wichtiger Satz!' }
+  ]},
+  // 11 - Supermarkt
+  { category: 'Alltag & Einkaufen', sentences: [
+    { pt: 'Onde estão as frutas?', de: 'Wo ist das Obst?', pron: 'ON-d esh-TOWNG ash FROO-tash', context: 'Supermarkt', tip: '"Legumes" = Gemüse' },
+    { pt: 'Tem saco, por favor?', de: 'Haben Sie eine Tüte, bitte?', pron: 'teng SA-ko, por fa-VOR', context: 'Kasse', tip: 'In Portugal muss man Tüten kaufen' }
+  ]},
+  // 12 - Restaurant
+  { category: 'Café & Restaurant', sentences: [
+    { pt: 'Tem algum prato do dia?', de: 'Haben Sie ein Tagesgericht?', pron: 'teng al-GUNG PRA-to do DJI-a', context: 'Speisekarte', tip: 'Oft günstiger und frisch' },
+    { pt: 'Sem glúten, por favor.', de: 'Ohne Gluten, bitte.', pron: 'seng GLOO-teng, por fa-VOR', context: 'Diät', tip: 'Gilt auch für andere Allergien' }
+  ]},
+  // 13 - Natur
+  { category: 'Wetter & Natur', sentences: [
+    { pt: 'Que pôr do sol bonito!', de: 'Was für ein schöner Sonnenuntergang!', pron: 'k POR do SOL bo-NEE-to', context: 'Natur', tip: '"Nascer do sol" = Sonnenaufgang' },
+    { pt: 'Está muito vento hoje.', de: 'Es ist heute sehr windig.', pron: 'esh-TAH MUI-to VEN-to O-zhe', context: 'Wetter', tip: 'Typisch an der Küste' }
+  ]},
+  // 14 - Unterwegs
+  { category: 'Reisen & Orientierung', sentences: [
+    { pt: 'Quanto tempo demora a pé?', de: 'Wie lange dauert es zu Fuß?', pron: 'KWAN-to TEM-po de-MO-ra a PEH', context: 'Entfernung', tip: '"De carro" = mit dem Auto' },
+    { pt: 'Há uma bomba de gasolina perto?', de: 'Gibt es eine Tankstelle in der Nähe?', pron: 'ah OO-ma BOM-ba d ga-zo-LEE-na PER-to', context: 'Auto', tip: 'Wichtig für Reisen!' }
+  ]},
+  // 15 - Alltag
+  { category: 'Alltag & Einkaufen', sentences: [
+    { pt: 'Pode passar o recibo?', de: 'Können Sie mir die Quittung geben?', pron: 'POD pa-SAR o rre-SEE-bo', context: 'Einkauf', tip: '"Fatura" = Rechnung/Quittung' },
+    { pt: 'Aceita cartão?', de: 'Akzeptieren Sie Karte?', pron: 'a-SAI-ta kar-TOWNG', context: 'Zahlung', tip: 'MB Way ist in PT sehr verbreitet' }
+  ]},
+  // 16 - Gefühle
+  { category: 'Emotionen ausdrücken', sentences: [
+    { pt: 'Estou com saudades.', de: 'Ich vermisse (jemanden/etwas) sehr.', pron: 'esh-TOH kong sow-DA-desh', context: 'Sehnsucht', tip: '"Saudade" ist unübersetzbar — das Herzstück Portugals' },
+    { pt: 'Que alívio!', de: 'Was für eine Erleichterung!', pron: 'k a-LEE-vyo', context: 'Erleichterung', tip: 'Kurz und ausdrucksstark' }
+  ]},
+  // 17 - Smalltalk
+  { category: 'Höflichkeit & Begrüßung', sentences: [
+    { pt: 'De onde é?', de: 'Woher kommen Sie?', pron: 'd ON-d EH', context: 'Kennenlernen', tip: 'Antwort: "Sou da Alemanha" = Ich komme aus Deutschland' },
+    { pt: 'Há quanto tempo está em Portugal?', de: 'Wie lange sind Sie schon in Portugal?', pron: 'ah KWAN-to TEM-po esh-TAH eng por-tu-GAL', context: 'Gespräch', tip: 'Häufige Frage für Ausländer' }
+  ]},
+  // 18 - Tiere
+  { category: 'Haustiere & Natur', sentences: [
+    { pt: 'O meu cão é muito amigável.', de: 'Mein Hund ist sehr freundlich.', pron: 'o MEU KOWNG EH MUI-to a-mi-GA-vel', context: 'Haustier', tip: 'Gut wenn Leute Angst haben!' },
+    { pt: 'Vi uma lontra no lago hoje.', de: 'Ich habe heute einen Otter im See gesehen.', pron: 'VEE OO-ma LON-tra no LA-go O-zhe', context: 'Natur', tip: 'Für Lagoa de Santo André!' }
+  ]},
+  // 19 - Kommunikation
+  { category: 'Fragen stellen', sentences: [
+    { pt: 'Fala inglês?', de: 'Sprechen Sie Englisch?', pron: 'FA-la ing-GLESH', context: 'Sprache', tip: 'Notfall-Frage' },
+    { pt: 'Não percebi. Pode falar mais devagar?', de: 'Ich habe nicht verstanden. Können Sie langsamer sprechen?', pron: 'nowng per-se-BEE, POD fa-LAR maish de-va-GAR', context: 'Verständnis', tip: 'Essenziell beim Lernen!' }
+  ]},
+  // 20 - Camping
+  { category: 'Reisen & Orientierung', sentences: [
+    { pt: 'Tem lugar para uma autocaravana?', de: 'Haben Sie Platz für ein Wohnmobil?', pron: 'teng lu-GAR PA-ra OO-ma ow-to-ka-ra-VA-na', context: 'Camping', tip: 'Für den Dacia Dokker!' },
+    { pt: 'Onde posso despejar as águas residuais?', de: 'Wo kann ich das Abwasser entsorgen?', pron: 'ON-d PO-sso desh-pe-ZHAR ash A-gwash rre-zi-dwAISH', context: 'Camping', tip: 'Wichtige Frage auf Campingplätzen' }
+  ]},
+  // 21 - Morgen
+  { category: 'Zeit & Uhrzeit', sentences: [
+    { pt: 'Até logo!', de: 'Bis später!', pron: 'a-TEH LO-go', context: 'Abschied', tip: '"Até amanhã" = bis morgen' },
+    { pt: 'Bom fim de semana!', de: 'Schönes Wochenende!', pron: 'bong FING d se-MA-na', context: 'Abschied', tip: 'Freitags sehr verbreitet' }
+  ]},
+  // 22 - Markt
+  { category: 'Alltag & Einkaufen', sentences: [
+    { pt: 'Está fresco este peixe?', de: 'Ist dieser Fisch frisch?', pron: 'esh-TAH FRESH-ko ESH-t PAI-she', context: 'Markt', tip: '"Peixe" = Fisch, wichtig am Meer' },
+    { pt: 'Pode fazer um desconto?', de: 'Können Sie einen Rabatt geben?', pron: 'POD fa-ZER ung desh-KON-to', context: 'Verhandeln', tip: 'Auf Märkten durchaus üblich' }
+  ]},
+  // 23 - Arzt
+  { category: 'Gesundheit & Apotheke', sentences: [
+    { pt: 'Preciso de marcar uma consulta.', de: 'Ich muss einen Arzttermin vereinbaren.', pron: 'pre-SEE-zo d mar-KAR OO-ma kon-SUL-ta', context: 'Arzt', tip: '"Centro de saúde" = Gesundheitszentrum' },
+    { pt: 'Tenho dores nas costas.', de: 'Ich habe Rückenschmerzen.', pron: 'TE-nyo DO-resh nash KOSH-tash', context: 'Symptome', tip: '"Cabeça" = Kopf, "barriga" = Bauch' }
+  ]},
+  // 24 - Nacht
+  { category: 'Höflichkeit & Begrüßung', sentences: [
+    { pt: 'Boa noite! Durma bem.', de: 'Gute Nacht! Schlaf gut.', pron: 'BOH-a NOI-t, DUR-ma beng', context: 'Abend', tip: '"Boa noite" gilt auch als Begrüßung abends' },
+    { pt: 'Foi um dia muito bom.', de: 'Es war ein sehr guter Tag.', pron: 'foi ung DJI-a MUI-to bong', context: 'Abend', tip: 'Schöner Abschlusssatz' }
+  ]},
+  // 25 - Internet
+  { category: 'Alltag & Einkaufen', sentences: [
+    { pt: 'Qual é a palavra-passe do Wi-Fi?', de: 'Was ist das WLAN-Passwort?', pron: 'kwal EH a pa-LA-vra-PA-s do WAI-fai', context: 'Technik', tip: 'Unentbehrlich heutzutage!' },
+    { pt: 'A bateria do meu telemóvel está a morrer.', de: 'Der Akku meines Handys ist fast leer.', pron: 'a ba-te-REE-a do MEU te-le-MO-vel esh-TAH a mo-RREHR', context: 'Technik', tip: '"Telemóvel" = Handy (PT)' }
+  ]},
+  // 26 - Musik
+  { category: 'Emotionen ausdrücken', sentences: [
+    { pt: 'Esta música é incrível!', de: 'Diese Musik ist unglaublich!', pron: 'ESH-ta MOO-zi-ka EH ing-KREE-vel', context: 'Musik', tip: 'Für Konzerte und Festivals' },
+    { pt: 'Adoro o fado.', de: 'Ich liebe Fado.', pron: 'a-DO-ro o FA-do', context: 'Kultur', tip: 'Fado ist Portugals Seele' }
+  ]},
+  // 27 - Post
+  { category: 'Alltag & Einkaufen', sentences: [
+    { pt: 'Quero enviar este pacote para a Alemanha.', de: 'Ich möchte dieses Paket nach Deutschland schicken.', pron: 'KE-ro en-vee-AR ESH-t pa-KO-t PA-ra a a-le-MA-nya', context: 'Post', tip: '"CTT" = portugiesische Post' },
+    { pt: 'Quanto custa o selo?', de: 'Was kostet die Briefmarke?', pron: 'KWAN-to KUSh-ta o SE-lo', context: 'Post', tip: '"Carta" = Brief' }
+  ]},
+  // 28 - Meer
+  { category: 'Strand & Meer', sentences: [
+    { pt: 'O mar está muito agitado hoje.', de: 'Das Meer ist heute sehr aufgewühlt.', pron: 'o MAR esh-TAH MUI-to a-zhi-TA-do O-zhe', context: 'Meer', tip: 'Wichtig für Sicherheit!' },
+    { pt: 'Vamos nadar?', de: 'Sollen wir schwimmen gehen?', pron: 'VA-mosh na-DAR', context: 'Strand', tip: '"Mergulhar" = tauchen' }
+  ]},
+  // 29 - Dankbarkeit
+  { category: 'Höflichkeit & Begrüßung', sentences: [
+    { pt: 'Muito obrigada! Foi muito gentil.', de: 'Vielen Dank! Das war sehr nett.', pron: 'MUI-to o-bri-GA-da, foi MUI-to zhen-TEEL', context: 'Dankbarkeit', tip: '-o für Männer, -a für Frauen' },
+    { pt: 'De nada, com prazer.', de: 'Bitte sehr, gern geschehen.', pron: 'd NA-da, kong pra-ZER', context: 'Antwort', tip: 'Herzliche Antwort auf Dankeschön' }
+  ]},
 ];
-function getTodayCategory() {
+
+function getTodayPair() {
   const d = Math.floor((Date.now() - new Date(new Date().getFullYear(),0,0)) / 86400000);
-  return CATEGORIES[d % CATEGORIES.length];
+  return ALLE_SAETZE[d % ALLE_SAETZE.length];
 }
 
 // ===== LOAD SENTENCES =====
@@ -482,60 +629,33 @@ async function loadSentences(forceNew = false) {
   const todayStr = new Date().toISOString().split('T')[0];
   if (!forceNew && st.todayDate === todayStr && st.sentences) {
     currentSentences = st.sentences;
-    renderCards(currentSentences);
+    renderCards(currentSentences, st.category);
     updateStreak();
     return;
   }
 
   showLoading(true);
-  document.getElementById('error-msg').style.display = 'none';
-  document.getElementById('new-btn').disabled = true;
 
-  const category = getTodayCategory();
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        system: `Du bist ein Portugiesisch-Lehrer für deutsche Muttersprachler. Erstelle genau 2 alltägliche portugiesische Sätze zum vorgegebenen Thema. Antworte NUR mit einem JSON-Array, keine Markdown-Backticks, kein Kommentar.
-
-Format:
-[
-  {
-    "pt": "Bom dia! Como está?",
-    "de": "Guten Morgen! Wie geht es Ihnen?",
-    "pron": "bom DJI-a, KO-mo esh-TAH",
-    "context": "Formelle Begrüßung",
-    "tip": "Wird morgens bis ca. 12 Uhr verwendet"
-  },
-  { ... }
-]`,
-        messages: [{ role: 'user', content: `Thema: "${category}". 2 einfache, häufig verwendete Sätze auf Europäisch-Portugiesisch (Portugal, nicht Brasilien).` }]
-      })
-    });
-    if (!res.ok) throw new Error('API ' + res.status);
-    const data = await res.json();
-    const raw = data.content.find(b => b.type === 'text')?.text || '[]';
-    const sentences = JSON.parse(raw.replace(/```json|```/g, '').trim());
-    if (!Array.isArray(sentences) || sentences.length < 2) throw new Error('bad data');
-    currentSentences = sentences;
-    setState({ todayDate: todayStr, sentences, category });
-    renderCards(sentences);
-    updateStreak();
-  } catch(e) {
-    console.error(e);
-    showLoading(false);
-    document.getElementById('error-msg').style.display = 'block';
+  // Pick next set (rotate through all if forceNew)
+  let idx;
+  if (forceNew) {
+    idx = ((st.lastIdx || 0) + 1) % ALLE_SAETZE.length;
+  } else {
+    idx = Math.floor((Date.now() - new Date(new Date().getFullYear(),0,0)) / 86400000) % ALLE_SAETZE.length;
   }
+
+  const pair = ALLE_SAETZE[idx];
+  currentSentences = pair.sentences;
+  setState({ todayDate: todayStr, sentences: pair.sentences, category: pair.category, lastIdx: idx });
+  renderCards(pair.sentences, pair.category);
+  updateStreak();
   document.getElementById('new-btn').disabled = false;
 }
 
 // ===== RENDER =====
-function renderCards(sentences) {
+function renderCards(sentences, category) {
   showLoading(false);
-  const category = getState().category || getTodayCategory();
+  category = category || getState().category || '—';
   const container = document.getElementById('cards-container');
   container.innerHTML = '';
   sentences.forEach((s, i) => {
