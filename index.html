@@ -394,15 +394,7 @@
     <div class="install-arrow">›</div>
   </div>
 
-  <!-- Notification bar -->
-  <div class="notification-bar" id="notif-bar" onclick="openNotifModal()">
-    <span>🔔</span>
-    <div>
-      <strong>Morgendliche Erinnerung einrichten</strong><br>
-      Täglich neue Sätze zur gewünschten Zeit
-    </div>
-    <span style="margin-left:auto;">›</span>
-  </div>
+
 
   <div id="loading">
     <div class="wave"><span></span><span></span><span></span></div>
@@ -416,7 +408,6 @@
     <button class="btn-primary" id="new-btn" onclick="loadSentences(true)">🔄 Neue Sätze generieren</button>
     <button class="btn-secondary" onclick="speakAll()">🔊 Alle Sätze vorlesen</button>
     <div class="next-badge" id="next-badge"></div>
-  </div>
 
   <div class="streak-bar" id="streak-bar" style="display:none;">
     <span>🔥</span><span id="streak-text"></span>
@@ -426,22 +417,7 @@
 
 </div>
 
-<!-- Notification Modal -->
-<div class="modal-overlay" id="modal-overlay" onclick="handleOverlayClick(event)">
-  <div class="modal">
-    <h2>🔔 Tägliche Erinnerung</h2>
-    <p>Wähle eine Uhrzeit — du bekommst jeden Morgen eine Benachrichtigung.</p>
-    <div class="notif-time-row">
-      <label>Uhrzeit:</label>
-      <input type="time" id="notif-time-input" value="08:00">
-    </div>
-    <div class="modal-btns">
-      <button class="modal-btn-yes" onclick="setupNotification()">Erinnerung aktivieren ✓</button>
-      <button class="modal-btn-no" onclick="closeNotifModal()">Später</button>
-    </div>
-    <div id="notif-status" class="notif-status" style="display:none;"></div>
-  </div>
-</div>
+
 
 <script>
 // ===== SERVICE WORKER ENTFERNEN =====
@@ -811,83 +787,12 @@ function speakAll() {
   next();
 }
 
-// ===== NOTIFICATIONS =====
+// ===== NEXT BADGE =====
 function showNextBadge() {
-  const st = getState();
-  document.getElementById('next-badge').textContent = st.notifTime
-    ? `⏰ Tägliche Erinnerung: ${st.notifTime} Uhr`
-    : '⏰ Noch keine Erinnerung eingerichtet';
-}
-
-function openNotifModal() { document.getElementById('modal-overlay').classList.add('open'); }
-function closeNotifModal() { document.getElementById('modal-overlay').classList.remove('open'); }
-function handleOverlayClick(e) { if (e.target === e.currentTarget) closeNotifModal(); }
-
-async function setupNotification() {
-  const timeVal = document.getElementById('notif-time-input').value || '08:00';
-  const statusEl = document.getElementById('notif-status');
-  statusEl.style.display = 'inline-block';
-
-  if (!('Notification' in window)) {
-    statusEl.className = 'notif-status denied';
-    statusEl.textContent = '⚠️ Dein Browser unterstützt keine Benachrichtigungen.';
-    return;
-  }
-
-  let perm = Notification.permission;
-  if (perm === 'default') perm = await Notification.requestPermission();
-
-  if (perm === 'granted') {
-    setState({ notifTime: timeVal });
-    scheduleNotification(timeVal);
-    statusEl.className = 'notif-status granted';
-    statusEl.textContent = `✓ Erinnerung um ${timeVal} Uhr gespeichert!`;
-    setTimeout(() => {
-      closeNotifModal();
-      showNextBadge();
-      updateNotifBar(timeVal);
-    }, 1600);
-  } else {
-    statusEl.className = 'notif-status denied';
-    statusEl.textContent = '❌ Bitte Benachrichtigungen erlauben und erneut versuchen.';
-  }
-}
-
-function updateNotifBar(time) {
-  const bar = document.getElementById('notif-bar');
-  bar.style.background = '#1f5c47';
-  bar.querySelector('strong').textContent = `🔔 Erinnerung: ${time} Uhr aktiv`;
-}
-
-function scheduleNotification(timeStr) {
-  if (window._notifInterval) clearInterval(window._notifInterval);
-  const [h, m] = timeStr.split(':').map(Number);
-  function check() {
-    const now = new Date();
-    if (now.getHours() === h && now.getMinutes() === m) {
-      const todayStr = now.toISOString().split('T')[0];
-      const st = getState();
-      if (st.lastNotif !== todayStr) {
-        setState({ lastNotif: todayStr });
-        new Notification('🇵🇹 Português do Dia', {
-          body: 'Deine täglichen Sätze warten auf dich!',
-          icon: './icon-192.png',
-          tag: 'pt-daily'
-        });
-      }
-    }
-  }
-  window._notifInterval = setInterval(check, 30000);
-  check();
+  document.getElementById('next-badge').textContent = '🌙 Neue Sätze kommen automatisch um Mitternacht';
 }
 
 // ===== INIT =====
-const saved = getState();
-if (saved.notifTime && Notification.permission === 'granted') {
-  scheduleNotification(saved.notifTime);
-  updateNotifBar(saved.notifTime);
-}
-
 speechSynthesis.getVoices();
 speechSynthesis.addEventListener('voiceschanged', () => speechSynthesis.getVoices());
 loadSentences();
