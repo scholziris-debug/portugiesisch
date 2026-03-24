@@ -1,4 +1,4 @@
-const CACHE = 'pt-dia-v1';
+const CACHE = 'pt-dia-v3';
 const ASSETS = ['./index.html', './manifest.json'];
 
 self.addEventListener('install', e => {

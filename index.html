@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="cache-control" content="no-cache, no-store, must-revalidate">
+<meta name="version" content="3.0">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -335,6 +337,40 @@
   }
   .notif-status.granted { background: #e8f5e9; color: #2d5a4f; }
   .notif-status.denied { background: #fdecea; color: #a03030; }
+
+  /* Archive */
+  #archive { margin-top: 2rem; }
+  .archive-header {
+    font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--cinza); margin-bottom: 0.8rem;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .archive-header::after {
+    content: ''; flex: 1; height: 1px; background: rgba(26,58,92,0.12);
+  }
+  .archive-day {
+    border: 1px solid rgba(26,58,92,0.1);
+    border-radius: 12px; margin-bottom: 0.7rem;
+    overflow: hidden; background: white;
+  }
+  .archive-day-header {
+    padding: 0.8rem 1.1rem;
+    display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer; user-select: none; touch-action: manipulation;
+    background: white;
+  }
+  .archive-day-header:active { background: var(--areia); }
+  .archive-day-title { font-size: 0.82rem; color: var(--cinza); }
+  .archive-day-title strong { color: var(--azul); font-size: 0.88rem; }
+  .archive-chevron { font-size: 0.8rem; color: var(--cinza); transition: transform 0.2s; }
+  .archive-day.open .archive-chevron { transform: rotate(90deg); }
+  .archive-day-body { display: none; padding: 0 1.1rem 1rem; border-top: 1px solid rgba(26,58,92,0.07); }
+  .archive-day.open .archive-day-body { display: block; }
+  .archive-sentence { padding: 0.6rem 0; border-bottom: 1px solid rgba(26,58,92,0.06); }
+  .archive-sentence:last-child { border-bottom: none; }
+  .archive-pt { font-family: 'Playfair Display', serif; font-style: italic; font-size: 1rem; color: var(--azul); }
+  .archive-de { font-size: 0.82rem; color: #777; margin-top: 0.15rem; }
+  .archive-pron { font-size: 0.75rem; color: var(--ouro); margin-top: 0.1rem; }
 </style>
 </head>
 <body>
@@ -386,6 +422,8 @@
     <span>🔥</span><span id="streak-text"></span>
   </div>
 
+  <div id="archive" style="display:none;"></div>
+
 </div>
 
 <!-- Notification Modal -->
@@ -408,7 +446,9 @@
 <script>
 // ===== SERVICE WORKER =====
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').catch(e => console.log('SW:', e));
+  navigator.serviceWorker.register('./sw.js').then(reg => {
+    reg.update(); // Force check for new version
+  }).catch(e => console.log('SW:', e));
 }
 
 // ===== PWA INSTALL =====
@@ -630,6 +670,7 @@ async function loadSentences(forceNew = false) {
   if (!forceNew && st.todayDate === todayStr && st.sentences) {
     currentSentences = st.sentences;
     renderCards(currentSentences, st.category);
+    renderArchive();
     updateStreak();
     return;
   }
@@ -646,8 +687,19 @@ async function loadSentences(forceNew = false) {
 
   const pair = ALLE_SAETZE[idx];
   currentSentences = pair.sentences;
-  setState({ todayDate: todayStr, sentences: pair.sentences, category: pair.category, lastIdx: idx });
+
+  // Save to archive
+  const st2 = getState();
+  const archive = st2.archive || [];
+  // Only add if it's a new day entry
+  if (!archive.length || archive[0].date !== todayStr) {
+    archive.unshift({ date: todayStr, category: pair.category, sentences: pair.sentences });
+    if (archive.length > 4) archive.pop(); // keep max 4 days
+  }
+
+  setState({ todayDate: todayStr, sentences: pair.sentences, category: pair.category, lastIdx: idx, archive });
   renderCards(pair.sentences, pair.category);
+  renderArchive();
   updateStreak();
   document.getElementById('new-btn').disabled = false;
 }
@@ -681,6 +733,42 @@ function esc(s) {
   const d = document.createElement('div');
   d.textContent = s || '';
   return d.innerHTML;
+}
+
+// ===== ARCHIVE =====
+function renderArchive() {
+  const st = getState();
+  const archive = st.archive || [];
+  const past = archive.slice(1); // skip today
+  const container = document.getElementById('archive');
+  if (!past.length) { container.style.display = 'none'; return; }
+
+  container.style.display = 'block';
+  const weekdays = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+
+  container.innerHTML = `<div class="archive-header">Letzte Tage</div>` +
+    past.map((entry, i) => {
+      const d = new Date(entry.date);
+      const label = `${weekdays[d.getDay()]}, ${d.getDate()}.${d.getMonth()+1}.`;
+      const sentences = entry.sentences.map(s => `
+        <div class="archive-sentence">
+          <div class="archive-pt">${esc(s.pt)}</div>
+          <div class="archive-pron">${esc(s.pron)}</div>
+          <div class="archive-de">${esc(s.de)}</div>
+        </div>`).join('');
+      return `
+        <div class="archive-day" id="arch-${i}">
+          <div class="archive-day-header" onclick="toggleArchive('arch-${i}')">
+            <div class="archive-day-title"><strong>${label}</strong> · ${esc(entry.category)}</div>
+            <span class="archive-chevron">›</span>
+          </div>
+          <div class="archive-day-body">${sentences}</div>
+        </div>`;
+    }).join('');
+}
+
+function toggleArchive(id) {
+  document.getElementById(id).classList.toggle('open');
 }
 
 function showLoading(show) {
