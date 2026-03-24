@@ -444,11 +444,11 @@
 </div>
 
 <script>
-// ===== SERVICE WORKER =====
+// ===== SERVICE WORKER ENTFERNEN =====
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').then(reg => {
-    reg.update(); // Force check for new version
-  }).catch(e => console.log('SW:', e));
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(reg => reg.unregister());
+  });
 }
 
 // ===== PWA INSTALL =====
